@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frequency Tables | ICF-SL</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{padding:20px;background:#fff;font-family:'Oswald',Arial,sans-serif;color:#000;font-weight:500;}
+.page-container{width:100%;max-width:1200px;margin:0 auto;}
+.page-header{background:#004080;color:#fff;padding:25px 30px;text-align:center;margin-bottom:15px;border-radius:8px 8px 0 0;}
+.logo-row{display:flex;justify-content:center;align-items:center;gap:30px;margin-bottom:15px;}
+.logo-box{background:#fff;border-radius:8px;padding:10px;display:flex;align-items:center;justify-content:center;}
+.logo-box img{width:100px;height:auto;border-radius:6px;}
+.page-header h3{margin:12px 0 5px;font-size:14px;font-weight:700;letter-spacing:1px;}
+.page-header .tagline{margin:0;font-size:10px;}
+.page-header h1{margin:20px 0 10px;font-size:24px;font-weight:700;letter-spacing:1px;}
+.page-header .subtitle{font-size:14px;}
+.content-card{border:4px double #004080;border-radius:12px;padding:12px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.1);margin-bottom:15px;}
+.content-inner{padding:25px;}
+.section-header{background:#004080;color:#fff;padding:15px 20px;margin-bottom:20px;border-radius:6px;display:flex;align-items:center;gap:15px;}
+.section-icon{background:#fff;color:#004080;width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;}
+.section-title{font-size:18px;font-weight:700;letter-spacing:0.5px;}
+.upload-section{background:#f8f9fa;padding:2rem;border-radius:8px;border:2px dashed #004080;text-align:center;margin:1rem 0;}
+.upload-section.loaded{background:#d4edda;border-color:#28a745;border-style:solid;}
+.upload-section h3{color:#004080;margin-bottom:1rem;font-size:18px;}
+.file-input-wrapper{position:relative;display:inline-block;cursor:pointer;background:#004080;color:#fff;padding:14px 24px;border-radius:6px;border:2px solid #004080;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;font-family:'Oswald',Arial,sans-serif;margin-top:1rem;}
+.file-input-wrapper input[type="file"]{position:absolute;left:-9999px;}
+.file-status{margin-top:15px;font-weight:700;}
+.file-status.loaded{color:#28a745;}
+.file-status.error{color:#dc3545;}
+.btn{padding:14px 24px;border:2px solid #004080;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-family:'Oswald',Arial,sans-serif;transition:all 0.2s;margin:5px;}
+.btn-primary{background:#004080;color:#fff;}
+.btn-primary:hover{background:#0056b3;}
+.btn-gold{background:#ffc107;color:#000;border-color:#ffc107;}
+.btn-gold:hover{background:#e0a800;}
+.btn-secondary{background:#fff;color:#004080;}
+.btn-secondary:hover{background:#004080;color:#fff;}
+.btn-sm{padding:8px 16px;font-size:12px;}
+.config-card{background:#f8f9fa;padding:1.5rem;border-radius:8px;border:2px solid #004080;margin:1rem 0;}
+.config-card h4{color:#004080;margin-bottom:1rem;font-size:16px;font-weight:700;}
+.form-group{margin-bottom:1rem;}
+.form-label{display:block;color:#004080;font-size:12px;font-weight:700;margin-bottom:8px;text-transform:uppercase;}
+.form-select{width:100%;padding:12px;border:2px solid #004080;border-radius:6px;font-family:'Oswald',sans-serif;font-size:14px;}
+.form-select:focus{outline:none;border-color:#0056b3;}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin:1.5rem 0;}
+.feature-card{background:#f8f9fa;padding:1.5rem;border-radius:8px;border:2px solid #004080;}
+.feature-card h4{color:#004080;margin-bottom:1rem;font-size:16px;font-weight:700;text-transform:uppercase;}
+.feature-card ul{color:#000;line-height:1.8;padding-left:1.5rem;}
+.feature-card li{margin-bottom:0.5rem;font-weight:500;font-size:14px;}
+.feature-card p{font-size:14px;line-height:1.7;}
+.alert{padding:1rem;border-radius:6px;margin:1rem 0;font-weight:500;}
+.alert-success{background:#d4edda;border:2px solid #28a745;color:#155724;}
+.alert-warning{background:#fff3cd;border:2px solid #ffc107;color:#856404;}
+.alert-error{background:#f8d7da;border:2px solid #dc3545;color:#721c24;}
+.alert-info{background:#e7f3ff;border:2px solid #004080;color:#004080;}
+.hidden{display:none!important;}
+.results-container{margin-top:20px;}
+.result-box{background:#f8f9fa;border:2px solid #004080;border-radius:8px;padding:20px;margin:15px 0;}
+.result-title{color:#004080;font-size:18px;font-weight:700;margin-bottom:15px;border-bottom:2px solid #004080;padding-bottom:10px;}
+.freq-table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0;}
+.freq-table th{background:#004080;color:#fff;padding:12px;text-align:left;font-weight:700;}
+.freq-table td{padding:10px 12px;border:1px solid #ddd;}
+.freq-table tr:nth-child(even){background:#f8f9fa;}
+.freq-table .total-row{background:#e7f3ff;font-weight:700;}
+.freq-table td:not(:first-child){text-align:center;}
+.bar-bg{background:#e9ecef;border-radius:4px;height:20px;min-width:100px;}
+.bar-fill{background:#004080;height:20px;border-radius:4px;transition:width 0.5s ease;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin:1.5rem 0;}
+.stats-card{background:#f8f9fa;padding:1rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);text-align:center;border:2px solid #004080;}
+.stats-card h4{color:#666;font-size:11px;margin-bottom:0.5rem;text-transform:uppercase;}
+.stats-card .metric-value{font-size:1.6rem;color:#004080;margin-bottom:0.25rem;font-weight:700;}
+.stats-card p{color:#666;font-size:11px;}
+.chart-container{border:2px solid #004080;border-radius:8px;margin-top:15px;background:#fff;min-height:400px;}
+.col-checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:10px 0;}
+.col-checkbox{display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:2px solid #004080;border-radius:6px;cursor:pointer;}
+.col-checkbox input{width:16px;height:16px;cursor:pointer;}
+.col-checkbox label{cursor:pointer;font-size:13px;font-weight:500;}
+.tab-row{display:flex;gap:5px;margin-bottom:-2px;flex-wrap:wrap;}
+.tab-btn{padding:8px 16px;background:#f8f9fa;border:2px solid #004080;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;color:#004080;}
+.tab-btn.active{background:#004080;color:#fff;}
+.tab-content{border:2px solid #004080;border-radius:0 6px 6px 6px;padding:20px;background:#fff;}
+.page-footer{background:#004080;color:#fff;padding:20px 30px;text-align:center;font-size:13px;line-height:1.7;font-weight:500;border-radius:0 0 8px 8px;}
+.page-footer p{margin:6px 0 0;font-size:12px;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:#f8f9fa;}
+::-webkit-scrollbar-thumb{background:#004080;border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="page-container">
+  <div class="page-header">
+    <div class="logo-row">
+      <div class="logo-box"><img src="https://github.com/mohamedsillahkanu/gdp-dashboard-2/raw/6c7463b0d5c3be150aafae695a4bcbbd8aeb1499/ICF-SL.jpg" alt="ICF-SL Logo"></div>
+    </div>
+    <h3>Informatics Consultancy Firm-Sierra Leone<br>(ICF-SL)</h3>
+    <p class="tagline"><em>Driving Data-Driven Solutions for Health and Development</em></p>
+    <h1>FREQUENCY TABLES</h1>
+    <p class="subtitle">Counts, Percentages, and Cumulative Distributions for Categorical Variables</p>
+  </div>
+
+  <div class="content-card"><div class="content-inner">
+    <div id="alertContainer"></div>
+
+    <div class="section-header"><span class="section-icon">?</span><span class="section-title">ABOUT THIS TOOL</span></div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>What is a Frequency Table?</h4>
+        <p>A frequency table summarises how often each unique value appears in a dataset. It displays counts (n), relative frequencies (%), and cumulative percentages to describe the distribution of categorical or discrete variables.</p>
+      </div>
+      <div class="feature-card">
+        <h4>When to Use</h4>
+        <ul>
+          <li>Summarising categorical survey responses</li>
+          <li>Describing disease case distributions</li>
+          <li>Tabulating diagnostic test outcomes</li>
+          <li>Initial data exploration and quality checks</li>
+        </ul>
+      </div>
+      <div class="feature-card">
+        <h4>Output Includes</h4>
+        <ul>
+          <li><strong>Frequency (n):</strong> Count of each category</li>
+          <li><strong>Relative Frequency (%):</strong> Proportion of total</li>
+          <li><strong>Cumulative %:</strong> Running total percentage</li>
+          <li><strong>Bar chart:</strong> Visual distribution</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-header"><span class="section-icon">1</span><span class="section-title">DATA INPUT</span></div>
+    <div class="config-card">
+      <h4>Upload Your Data File</h4>
+      <p style="margin-bottom:15px;color:#333;">Upload a CSV or Excel file. Select one or more categorical columns to generate frequency tables.</p>
+      <button class="btn btn-gold" onclick="downloadSample()">📥 Download Sample Data</button>
+    </div>
+    <div class="upload-section" id="uploadZone">
+      <h3>📁 UPLOAD DATA FILE</h3>
+      <p>Supports CSV and Excel (.xlsx, .xls) files</p>
+      <label class="file-input-wrapper">Choose File<input type="file" id="fileInput" accept=".csv,.xlsx,.xls"></label>
+      <div id="fileStatus" class="file-status"></div>
+    </div>
+    <div class="alert alert-info"><strong>Tip:</strong> Select one or more columns. A separate frequency table will be generated for each selected column.</div>
+
+    <div id="columnSelectSection" class="config-card hidden">
+      <h4>Select Column(s) for Frequency Analysis</h4>
+      <div id="colCheckboxGrid" class="col-checkbox-grid"></div>
+      <button class="btn btn-primary" onclick="generateTables()" style="margin-top:10px;">📊 Generate Frequency Tables</button>
+    </div>
+
+    <div id="resultsSection" class="hidden">
+      <div class="section-header"><span class="section-icon">2</span><span class="section-title">RESULTS</span></div>
+      <div id="tabRow" class="tab-row"></div>
+      <div id="tabContent" class="tab-content"></div>
+      <div class="result-box" style="margin-top:15px;">
+        <div class="result-title">📊 Visualization</div>
+        <div style="margin-bottom:10px;">
+          <select id="chartColSelect" class="form-select" style="width:250px;display:inline-block;"></select>
+          <button class="btn btn-gold btn-sm" onclick="renderChart()">Render Chart</button>
+        </div>
+        <div class="chart-container" id="chartArea"></div>
+        <div style="margin-top:10px;">
+          <button class="btn btn-gold btn-sm" onclick="Plotly.downloadImage('chartArea',{format:'png',filename:'frequency_chart'})">📥 Download PNG</button>
+          <button class="btn btn-gold btn-sm" onclick="exportAllTables()">💾 Export HTML</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="page-footer">Informatics Consultancy Firm-Sierra Leone (ICF-SL)<p><em>Driving Data-Driven Solutions for Health and Development</em></p></div>
+</div>
+<script>
+let uploadedData=[], uploadedColumns=[], freqResults={};
+
+function showAlert(msg,type){
+  const c=document.getElementById('alertContainer');
+  c.innerHTML=`<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(()=>c.innerHTML='',5000);
+}
+
+document.getElementById('fileInput').addEventListener('change',function(e){
+  const file=e.target.files[0]; if(!file)return;
+  const statusEl=document.getElementById('fileStatus');
+  statusEl.textContent='Loading...'; statusEl.className='file-status';
+  const reader=new FileReader();
+  const isCSV=file.name.toLowerCase().endsWith('.csv');
+  reader.onload=function(ev){
+    try{
+      if(isCSV){const r=Papa.parse(ev.target.result,{header:true,skipEmptyLines:true});uploadedData=r.data;uploadedColumns=r.meta.fields||[];}
+      else{const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];uploadedData=XLSX.utils.sheet_to_json(ws);uploadedColumns=Object.keys(uploadedData[0]||{});}
+      statusEl.innerHTML=`✓ Loaded: ${file.name} (${uploadedData.length} rows)`;
+      statusEl.className='file-status loaded';
+      document.getElementById('uploadZone').classList.add('loaded');
+      buildCheckboxes();
+      showAlert('File loaded! Select columns below.','success');
+    }catch(err){statusEl.innerHTML='✗ Error'; statusEl.className='file-status error'; showAlert('Error: '+err.message,'error');}
+  };
+  if(isCSV)reader.readAsText(file); else reader.readAsArrayBuffer(file);
+});
+
+function buildCheckboxes(){
+  const grid=document.getElementById('colCheckboxGrid');
+  grid.innerHTML='';
+  uploadedColumns.forEach(col=>{
+    grid.innerHTML+=`<div class="col-checkbox"><input type="checkbox" id="chk_${col}" value="${col}"><label for="chk_${col}">${col}</label></div>`;
+  });
+  document.getElementById('columnSelectSection').classList.remove('hidden');
+}
+
+function generateTables(){
+  const selected=[...document.querySelectorAll('#colCheckboxGrid input:checked')].map(i=>i.value);
+  if(!selected.length){showAlert('Please select at least one column.','warning');return;}
+  freqResults={};
+  selected.forEach(col=>{
+    const counts={};
+    uploadedData.forEach(row=>{const v=String(row[col]??'').trim();if(v)counts[v]=(counts[v]||0)+1;});
+    const total=Object.values(counts).reduce((a,b)=>a+b,0);
+    let cumPct=0;
+    freqResults[col]=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([val,n])=>{
+      const pct=(n/total*100); cumPct+=pct;
+      return{val,n,pct:pct.toFixed(2),cumPct:cumPct.toFixed(2)};
+    });
+    freqResults[col]._total=total;
+  });
+  renderTabs(selected);
+  buildChartSelect(selected);
+  renderChart(selected[0]);
+  document.getElementById('resultsSection').classList.remove('hidden');
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+  showAlert('Frequency tables generated!','success');
+}
+
+function renderTabs(cols){
+  const tabRow=document.getElementById('tabRow');
+  tabRow.innerHTML='';
+  cols.forEach((col,i)=>{
+    tabRow.innerHTML+=`<button class="tab-btn ${i===0?'active':''}" onclick="switchTab('${col}',this)">${col}</button>`;
+  });
+  switchTab(cols[0],tabRow.querySelector('.active'));
+}
+
+function switchTab(col,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const data=freqResults[col];
+  const total=data._total;
+  let html=`<h4 style="color:#004080;margin-bottom:15px;">Frequency Table: <em>${col}</em> (N = ${total})</h4>`;
+  html+=`<table class="freq-table"><thead><tr><th>${col}</th><th>Frequency (n)</th><th>Relative Frequency (%)</th><th>Cumulative (%)</th><th style="min-width:150px;">Distribution</th></tr></thead><tbody>`;
+  data.forEach(row=>{
+    const barW=Math.round(parseFloat(row.pct));
+    html+=`<tr><td>${row.val}</td><td>${row.n}</td><td>${row.pct}%</td><td>${row.cumPct}%</td><td><div class="bar-bg"><div class="bar-fill" style="width:${barW}%"></div></div></td></tr>`;
+  });
+  html+=`<tr class="total-row"><td><strong>Total</strong></td><td><strong>${total}</strong></td><td><strong>100.00%</strong></td><td><strong>100.00%</strong></td><td></td></tr>`;
+  html+=`</tbody></table>`;
+  html+=`<p style="margin-top:10px;font-size:12px;font-style:italic;color:#555;"><em>Note.</em> Relative frequencies are rounded to 2 decimal places. Cumulative percentages are based on the sorted frequency order.</p>`;
+  document.getElementById('tabContent').innerHTML=html;
+}
+
+function buildChartSelect(cols){
+  const sel=document.getElementById('chartColSelect');
+  sel.innerHTML='';
+  cols.forEach(col=>sel.innerHTML+=`<option value="${col}">${col}</option>`);
+}
+
+function renderChart(col){
+  col=col||document.getElementById('chartColSelect').value;
+  if(!freqResults[col])return;
+  const data=freqResults[col];
+  const x=data.map(r=>r.val), y=data.map(r=>r.n), pct=data.map(r=>r.pct+'%');
+  Plotly.newPlot('chartArea',[{x,y,type:'bar',marker:{color:'#004080'},text:pct,textposition:'outside'}],{
+    title:{text:`<b>Frequency Distribution: ${col}</b>`,font:{family:'Oswald',size:18,color:'#004080'}},
+    xaxis:{title:{text:col,font:{size:14}},tickfont:{size:12}},
+    yaxis:{title:{text:'Frequency (n)',font:{size:14}}},
+    plot_bgcolor:'#fff',paper_bgcolor:'#fff',font:{family:'Oswald'},margin:{t:60,b:80,l:60,r:30}
+  },{responsive:true});
+}
+
+function exportAllTables(){
+  let body='';
+  Object.entries(freqResults).forEach(([col,data])=>{
+    const total=data._total;
+    body+=`<h2>${col} (N=${total})</h2><table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Times New Roman;font-size:12pt;"><thead><tr><th>${col}</th><th>n</th><th>%</th><th>Cumulative %</th></tr></thead><tbody>`;
+    data.forEach(r=>body+=`<tr><td>${r.val}</td><td>${r.n}</td><td>${r.pct}%</td><td>${r.cumPct}%</td></tr>`);
+    body+=`<tr style="font-weight:bold;"><td>Total</td><td>${total}</td><td>100.00%</td><td>100.00%</td></tr></tbody></table><br>`;
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Frequency Tables</title></head><body><h1>Frequency Tables - ICF-SL</h1>${body}</body></html>`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([html],{type:'text/html'})); a.download='frequency_tables.html'; a.click();
+}
+
+function downloadSample(){
+  const regions=['Western Area','Northern','Eastern','Southern'];
+  const outcomes=['Positive','Negative','Indeterminate'];
+  const ages=['Under 5','5-14','15-24','25-34','35+'];
+  const genders=['Male','Female'];
+  const rows=[['Region','RDT_Result','Age_Group','Gender']];
+  for(let i=0;i<200;i++){
+    rows.push([regions[Math.floor(Math.random()*regions.length)],outcomes[Math.floor(Math.random()*outcomes.length)],ages[Math.floor(Math.random()*ages.length)],genders[Math.floor(Math.random()*genders.length)]]);
+  }
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='frequency_sample.csv'; a.click();
+  showAlert('Sample data downloaded!','success');
+}
+</script>
+</body>
+</html>
